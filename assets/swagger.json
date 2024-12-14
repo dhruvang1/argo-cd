@@ -281,6 +281,128 @@
             "description": "the project names to restrict returned list applications (legacy name for backwards-compatibility).",
             "name": "project",
             "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the repos filter.",
+            "name": "repos",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the clusters filter.",
+            "name": "clusters",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the namespaces filter.",
+            "name": "namespaces",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the auto sync filter.",
+            "name": "autoSync",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the sync status filter.",
+            "name": "syncStatuses",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the health status filter.",
+            "name": "healthStatuses",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search.",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "APP_NAME",
+              "CREATED_AT",
+              "SYNCHRONIZED"
+            ],
+            "type": "string",
+            "default": "APP_NAME",
+            "description": "sort.",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minAppName",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minCreatedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minSynchronizedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxAppName",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxCreatedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxSynchronizedAt",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int32",
+            "description": "offset for the list call.",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int32",
+            "description": "limit for the list call.",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -619,6 +741,128 @@
             "collectionFormat": "multi",
             "description": "the project names to restrict returned list applications (legacy name for backwards-compatibility).",
             "name": "project",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the repos filter.",
+            "name": "repos",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the clusters filter.",
+            "name": "clusters",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the namespaces filter.",
+            "name": "namespaces",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the auto sync filter.",
+            "name": "autoSync",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the sync status filter.",
+            "name": "syncStatuses",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the health status filter.",
+            "name": "healthStatuses",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search.",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "APP_NAME",
+              "CREATED_AT",
+              "SYNCHRONIZED"
+            ],
+            "type": "string",
+            "default": "APP_NAME",
+            "description": "sort.",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minAppName",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minCreatedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minSynchronizedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxAppName",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxCreatedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxSynchronizedAt",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int32",
+            "description": "offset for the list call.",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int32",
+            "description": "limit for the list call.",
+            "name": "limit",
             "in": "query"
           }
         ],
@@ -3982,6 +4226,128 @@
             "description": "the project names to restrict returned list applications (legacy name for backwards-compatibility).",
             "name": "project",
             "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the repos filter.",
+            "name": "repos",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the clusters filter.",
+            "name": "clusters",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the namespaces filter.",
+            "name": "namespaces",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the auto sync filter.",
+            "name": "autoSync",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the sync status filter.",
+            "name": "syncStatuses",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi",
+            "description": "the health status filter.",
+            "name": "healthStatuses",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "search.",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "APP_NAME",
+              "CREATED_AT",
+              "SYNCHRONIZED"
+            ],
+            "type": "string",
+            "default": "APP_NAME",
+            "description": "sort.",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minAppName",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minCreatedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "minSynchronizedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxAppName",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxCreatedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "maxSynchronizedAt",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int32",
+            "description": "offset for the list call.",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int32",
+            "description": "limit for the list call.",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -4109,6 +4475,15 @@
     }
   },
   "definitions": {
+    "ApplicationQuerysortBy": {
+      "type": "string",
+      "default": "APP_NAME",
+      "enum": [
+        "APP_NAME",
+        "CREATED_AT",
+        "SYNCHRONIZED"
+      ]
+    },
     "accountAccount": {
       "type": "object",
       "properties": {
@@ -6108,6 +6483,21 @@
         }
       }
     },
+    "v1alpha1ApplicationLabelStats": {
+      "type": "object",
+      "title": "ApplicationLabelStats contains the information about labels on the application",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "v1alpha1ApplicationList": {
       "type": "object",
       "title": "ApplicationList is list of Application resources\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
@@ -6120,6 +6510,58 @@
         },
         "metadata": {
           "$ref": "#/definitions/v1ListMeta"
+        },
+        "stats": {
+          "$ref": "#/definitions/v1alpha1ApplicationListStats"
+        }
+      }
+    },
+    "v1alpha1ApplicationListStats": {
+      "type": "object",
+      "title": "ApplicationListStats holds additional information about the list of applications",
+      "properties": {
+        "autoSyncEnabledCount": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "int64"
+          }
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1ApplicationDestination"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1alpha1ApplicationLabelStats"
+          }
+        },
+        "namespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalByHealthStatus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "int64"
+          }
+        },
+        "totalBySyncStatus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "int64"
+          }
         }
       }
     },

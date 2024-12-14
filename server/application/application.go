@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/argoproj/gitops-engine/pkg/health"
 	"math"
 	"reflect"
 	"sort"
@@ -272,40 +273,128 @@ func (s *Server) List(ctx context.Context, q *application.ApplicationQuery) (*ap
 		return nil, fmt.Errorf("error listing apps with selectors: %w", err)
 	}
 
-	filteredApps := apps
+	filteredApps := make([]*appv1.Application, 0)
+	// Skip any application that is neither in the control plane's namespace
+	// nor in the list of enabled namespaces.
+	// Filter this first to eliminate apps from other Argos in the same cluster
+	for _, a := range apps {
+		if !s.isNamespaceEnabled(a.Namespace) {
+			continue
+		}
+		// Filter by RBAC policy
+		if s.enf.Enforce(ctx.Value("claims"), rbacpolicy.ResourceApplications, rbacpolicy.ActionGet, a.RBACName(s.ns)) {
+			filteredApps = append(filteredApps, a)
+		}
+	}
+
+	// Build list of labels and namespaces
+	allLabels := make(map[string]map[string]bool)
+	allNamespaces := make(map[string]bool)
+	for _, a := range filteredApps {
+		for key, val := range a.Labels {
+			valueMap, ok := allLabels[key]
+			if !ok {
+				valueMap = make(map[string]bool)
+				allLabels[key] = valueMap
+			}
+			valueMap[val] = true
+		}
+
+		allNamespaces[a.Spec.Destination.Namespace] = true
+	}
+
 	// Filter applications by name
 	if q.Name != nil {
 		filteredApps = argoutil.FilterByNameP(filteredApps, *q.Name)
 	}
-
 	// Filter applications by projects
 	filteredApps = argoutil.FilterByProjectsP(filteredApps, getProjectsFromApplicationQuery(*q))
-
 	// Filter applications by source repo URL
-	filteredApps = argoutil.FilterByRepoP(filteredApps, q.GetRepo())
+	filteredApps = argoutil.FilterByReposP(filteredApps, getReposFromApplicationQuery(*q))
+	// Filter applications by clusters
+	filteredApps = argoutil.FilterByClustersP(filteredApps, q.GetClusters())
+	// Filter applications by destination namespaces
+	filteredApps = argoutil.FilterByNamespacesP(filteredApps, q.GetNamespaces())
+	// Filter applications by search text
+	filteredApps = argoutil.FilterBySearchP(filteredApps, q.GetSearch())
 
-	newItems := make([]appv1.Application, 0)
-	for _, a := range filteredApps {
-		// Skip any application that is neither in the control plane's namespace
-		// nor in the list of enabled namespaces.
-		if !s.isNamespaceEnabled(a.Namespace) {
-			continue
-		}
-		if s.enf.Enforce(ctx.Value("claims"), rbacpolicy.ResourceApplications, rbacpolicy.ActionGet, a.RBACName(s.ns)) {
-			newItems = append(newItems, *a)
-		}
+	syncStats, healthStats, autoSyncStats := calculateSyncHealthStats(filteredApps, q.GetSyncStatuses(), q.GetHealthStatuses(), q.GetAutoSync())
+
+	// Filter applications by sync status
+	filteredApps = argoutil.FilterBySyncStatusP(filteredApps, q.GetSyncStatuses())
+	// Filter applications by health status
+	filteredApps = argoutil.FilterByHealthStatusP(filteredApps, q.GetHealthStatuses())
+	// Filter applications by autoSync
+	filteredApps = argoutil.FilterByAutoSyncP(filteredApps, q.GetAutoSync())
+
+	totalApps := len(filteredApps)
+
+	switch q.GetSort() {
+	case application.ApplicationQuery_APP_NAME:
+		// Sort applications by name
+		sort.Slice(filteredApps, func(i, j int) bool {
+			return filteredApps[i].Name < filteredApps[j].Name
+		})
+	case application.ApplicationQuery_CREATED_AT:
+		// Sort applications in reverse by creation time
+		sort.Slice(filteredApps, func(i, j int) bool {
+			return filteredApps[j].CreationTimestamp.Before(&filteredApps[i].CreationTimestamp)
+		})
+	case application.ApplicationQuery_SYNCHRONIZED:
+		// Sort applications in reverse by synchronized time
+		sort.Slice(filteredApps, func(i, j int) bool {
+			if filteredApps[i].Status.OperationState == nil || filteredApps[i].Status.OperationState.FinishedAt == nil || filteredApps[j].Status.OperationState == nil || filteredApps[j].Status.OperationState.FinishedAt == nil {
+				return filteredApps[i].Name < filteredApps[j].Name // sort by name to maintain some consistency
+			}
+			return filteredApps[j].Status.OperationState.FinishedAt.Before(filteredApps[i].Status.OperationState.FinishedAt)
+		})
 	}
 
-	// Sort found applications by name
-	sort.Slice(newItems, func(i, j int) bool {
-		return newItems[i].Name < newItems[j].Name
-	})
+	finalItems := make([]appv1.Application, 0)
+	if q.GetOffset() < 0 || q.GetLimit() < 0 {
+		return nil, fmt.Errorf("offset and limit should be non negative integers")
+	}
+
+	start := int(q.GetOffset())
+	end := len(filteredApps)
+	if q.GetLimit() > 0 {
+		end = min(end, int(q.GetOffset()+q.GetLimit()))
+	}
+	for i := start; i < end; i++ {
+		finalItems = append(finalItems, *filteredApps[i])
+	}
+
+	labelList := make([]appv1.ApplicationLabelStats, 0, len(allLabels))
+	for key, values := range allLabels {
+		valueList := make([]string, 0, len(values))
+		for value, _ := range values {
+			valueList = append(valueList, value)
+		}
+		labelList = append(labelList, appv1.ApplicationLabelStats{
+			Key:    key,
+			Values: valueList,
+		})
+	}
+
+	namespaceList := make([]string, 0, len(allNamespaces))
+	for namespace, _ := range allNamespaces {
+		namespaceList = append(namespaceList, namespace)
+	}
 
 	appList := appv1.ApplicationList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: s.appInformer.LastSyncResourceVersion(),
 		},
-		Items: newItems,
+		Items: finalItems,
+		Stats: appv1.ApplicationListStats{
+			Total:               int64(totalApps),
+			TotalBySyncStatus:   syncStats,
+			TotalByHealthStatus: healthStats,
+			TotalByAutoSync:     autoSyncStats,
+			Labels:              labelList,
+			Namespaces:          namespaceList,
+			// TODO add Destinations
+		},
 	}
 	return &appList, nil
 }
@@ -2716,4 +2805,56 @@ func getProjectsFromApplicationQuery(q application.ApplicationQuery) []string {
 		return q.Project
 	}
 	return q.Projects
+}
+
+// getReposFromApplicationQuery gets the repo names from a query. If the "repo" field was specified, use
+// that. Otherwise, use the newer "repos" field.
+func getReposFromApplicationQuery(q application.ApplicationQuery) []string {
+	if q.GetRepo() != "" {
+		return []string{q.GetRepo()}
+	}
+	return q.GetRepos()
+}
+
+func calculateSyncHealthStats(apps []*appv1.Application, syncFilters []string, healthFilters []string, autoSyncFilters []string) (map[appv1.SyncStatusCode]int64, map[health.HealthStatusCode]int64, map[appv1.AutoSync]int64) {
+	syncCounts := make(map[appv1.SyncStatusCode]int64)
+	healthCounts := make(map[health.HealthStatusCode]int64)
+	autoSyncCounts := make(map[appv1.AutoSync]int64)
+
+	syncFilterMap := make(map[string]bool)
+	for _, filter := range syncFilters {
+		syncFilterMap[filter] = true
+	}
+
+	healthFilterMap := make(map[string]bool)
+	for _, filter := range healthFilters {
+		healthFilterMap[filter] = true
+	}
+
+	autoSyncFilterMap := make(map[string]bool)
+	for _, filter := range autoSyncFilters {
+		autoSyncFilterMap[filter] = true
+	}
+
+	var syncStatus bool
+	var healthStatus bool
+	var autoSyncStatus bool
+
+	for _, app := range apps {
+		healthStatus = len(healthFilterMap) == 0 || healthFilterMap[string(app.Status.Health.Status)]
+		syncStatus = len(syncFilterMap) == 0 || syncFilterMap[string(app.Status.Sync.Status)]
+		autoSyncStatus = len(autoSyncFilterMap) == 0 || autoSyncFilterMap[string(argoutil.AutoSync(app.Spec.SyncPolicy))]
+
+		if healthStatus && autoSyncStatus {
+			syncCounts[app.Status.Sync.Status]++
+		}
+		if syncStatus && autoSyncStatus {
+			healthCounts[app.Status.Health.Status]++
+		}
+		if syncStatus && healthStatus {
+			autoSyncCounts[argoutil.AutoSync(app.Spec.SyncPolicy)]++
+		}
+	}
+
+	return syncCounts, healthCounts, autoSyncCounts
 }

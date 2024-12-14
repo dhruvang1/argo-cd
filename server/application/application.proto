@@ -35,6 +35,45 @@ message ApplicationQuery {
 	optional string appNamespace = 7;
 	// the project names to restrict returned list applications (legacy name for backwards-compatibility)
 	repeated string project = 8;
+	// the repos filter
+	repeated string repos = 11;
+	// the clusters filter
+	repeated string clusters = 12;
+	// the namespaces filter
+	repeated string namespaces = 13;
+	// the auto sync filter
+	repeated string autoSync = 14;
+	// the sync status filter
+	repeated string syncStatuses = 15;
+	// the health status filter
+	repeated string healthStatuses = 16;
+	// search
+	optional string search = 17;
+
+	enum sortBy {
+		APP_NAME = 0;
+		CREATED_AT = 1;
+		SYNCHRONIZED = 2;
+	}
+
+	// sort
+	optional sortBy sort = 18;
+	// minValue for the watch calls, each value corresponds with sort option
+	oneof minValue {
+		string minAppName = 20;
+		string minCreatedAt = 21;
+		string minSynchronizedAt = 22;
+	}
+	// maxValue for the watch calls, each value corresponds with sort option
+	oneof maxValue {
+		string maxAppName = 30;
+		string maxCreatedAt = 31;
+		string maxSynchronizedAt = 32;
+	}
+	// offset for the list call
+	optional int32 offset = 40;
+	// limit for the list call
+	optional int32 limit = 41;
 }
 
 message NodeQuery {

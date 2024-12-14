@@ -613,17 +613,17 @@ func TestFilterByRepoP(t *testing.T) {
 	}
 
 	t.Run("Empty filter", func(t *testing.T) {
-		res := FilterByRepoP(apps, "")
+		res := FilterByReposP(apps, "")
 		assert.Len(t, res, 2)
 	})
 
 	t.Run("Match", func(t *testing.T) {
-		res := FilterByRepoP(apps, "git@github.com:owner/repo.git")
+		res := FilterByReposP(apps, "git@github.com:owner/repo.git")
 		assert.Len(t, res, 1)
 	})
 
 	t.Run("No match", func(t *testing.T) {
-		res := FilterByRepoP(apps, "git@github.com:owner/willnotmatch.git")
+		res := FilterByReposP(apps, "git@github.com:owner/willnotmatch.git")
 		assert.Empty(t, res)
 	})
 }

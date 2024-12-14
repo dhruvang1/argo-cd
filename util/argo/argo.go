@@ -133,6 +133,14 @@ func FilterByProjectsP(apps []*argoappv1.Application, projects []string) []*argo
 	return items
 }
 
+func arrayToMap(arr []string) map[string]bool {
+	ansMap := make(map[string]bool)
+	for _, i := range arr {
+		ansMap[i] = true
+	}
+	return ansMap
+}
+
 // FilterAppSetsByProjects returns applications which belongs to the specified project
 func FilterAppSetsByProjects(appsets []argoappv1.ApplicationSet, projects []string) []argoappv1.ApplicationSet {
 	if len(projects) == 0 {
@@ -166,15 +174,114 @@ func FilterByRepo(apps []argoappv1.Application, repo string) []argoappv1.Applica
 	return items
 }
 
-// FilterByRepoP returns application pointers
-func FilterByRepoP(apps []*argoappv1.Application, repo string) []*argoappv1.Application {
-	if repo == "" {
+// FilterByReposP returns application pointers
+func FilterByReposP(apps []*argoappv1.Application, repos []string) []*argoappv1.Application {
+	if len(repos) == 0 {
+		return apps
+	}
+	reposMap := arrayToMap(repos)
+	items := make([]*argoappv1.Application, 0)
+	for _, app := range apps {
+		if _, ok := reposMap[app.Spec.GetSource().RepoURL]; ok {
+			items = append(items, app)
+		}
+	}
+	return items
+}
+
+// FilterByClustersP returns application pointers
+func FilterByClustersP(apps []*argoappv1.Application, clusters []string) []*argoappv1.Application {
+	if len(clusters) == 0 {
+		return apps
+	}
+	clustersMap := arrayToMap(clusters)
+	items := make([]*argoappv1.Application, 0)
+	for _, app := range apps {
+		_, serverUrlMatch := clustersMap[app.Spec.Destination.Server]
+		_, serverNameMatch := clustersMap[app.Spec.Destination.Name]
+		if serverUrlMatch || serverNameMatch {
+			items = append(items, app)
+		}
+	}
+	return items
+}
+
+// FilterByNamespacesP returns application pointers
+func FilterByNamespacesP(apps []*argoappv1.Application, namespaces []string) []*argoappv1.Application {
+	if len(namespaces) == 0 {
+		return apps
+	}
+	namespacesMap := arrayToMap(namespaces)
+	items := make([]*argoappv1.Application, 0)
+	for _, app := range apps {
+		if _, ok := namespacesMap[app.Spec.Destination.Namespace]; ok {
+			items = append(items, app)
+		}
+	}
+	return items
+}
+
+func AutoSync(syncPolicy *argoappv1.SyncPolicy) argoappv1.AutoSync {
+	if syncPolicy != nil && syncPolicy.Automated != nil {
+		return argoappv1.AutoSyncEnabled
+	}
+	return argoappv1.AutoSyncDisabled
+}
+
+// FilterBySyncStatusP returns application pointers
+func FilterBySyncStatusP(apps []*argoappv1.Application, syncStatuses []string) []*argoappv1.Application {
+	if len(syncStatuses) == 0 {
+		return apps
+	}
+	syncStatusesMap := arrayToMap(syncStatuses)
+	items := make([]*argoappv1.Application, 0)
+	for _, app := range apps {
+		if _, ok := syncStatusesMap[string(app.Status.Sync.Status)]; ok {
+			items = append(items, app)
+		}
+	}
+	return items
+}
+
+// FilterByHealthStatusP returns application pointers
+func FilterByHealthStatusP(apps []*argoappv1.Application, healthStatuses []string) []*argoappv1.Application {
+	if len(healthStatuses) == 0 {
+		return apps
+	}
+	healthStatusesMap := arrayToMap(healthStatuses)
+	items := make([]*argoappv1.Application, 0)
+	for _, app := range apps {
+		if _, ok := healthStatusesMap[string(app.Status.Health.Status)]; ok {
+			items = append(items, app)
+		}
+	}
+	return items
+}
+
+// FilterByAutoSyncP returns application pointers
+func FilterByAutoSyncP(apps []*argoappv1.Application, autoSyncStatuses []string) []*argoappv1.Application {
+	if len(autoSyncStatuses) == 0 {
+		return apps
+	}
+	autoSyncStatusesMap := arrayToMap(autoSyncStatuses)
+	items := make([]*argoappv1.Application, 0)
+	for _, app := range apps {
+		if _, ok := autoSyncStatusesMap[string(AutoSync(app.Spec.SyncPolicy))]; ok {
+			items = append(items, app)
+		}
+	}
+	return items
+}
+
+// FilterBySearchP returns application pointers
+func FilterBySearchP(apps []*argoappv1.Application, search string) []*argoappv1.Application {
+	if search == "" {
 		return apps
 	}
 	items := make([]*argoappv1.Application, 0)
-	for i := 0; i < len(apps); i++ {
-		if apps[i].Spec.GetSource().RepoURL == repo {
-			items = append(items, apps[i])
+	for _, app := range apps {
+		if strings.Contains(app.Name, search) || strings.Contains(app.Namespace, search) {
+			items = append(items, app)
 		}
 	}
 	return items
